@@ -2,6 +2,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import * as authModel from '@/models/authModel';
 import { sendResetPasswordEmail } from '@/lib/mail';
+import { v4 as uuidv4 } from 'uuid';
 
 const SECRET = process.env.JWT_SECRET || 'secret_key';
 

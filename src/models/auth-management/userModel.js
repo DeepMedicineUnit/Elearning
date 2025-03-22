@@ -3,7 +3,16 @@ import sql from '@/lib/db';
 // Lấy danh sách user có phân trang
 export const getUsers = async (offset, limit) => {
   const result = await sql.query(`
-    SELECT u.*, r.name AS role_name
+        SELECT 
+      u.id, 
+      u.full_name, 
+      u.email, 
+      u.avatar_url, 
+      u.position, 
+      u.department_id, 
+      u.created_at, 
+      u.updated_at, 
+      r.name AS role_name
     FROM users u
     JOIN roles r ON u.role_id = r.id
     ORDER BY u.id

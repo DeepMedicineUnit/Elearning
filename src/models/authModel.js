@@ -16,7 +16,7 @@ export const createResetToken = async (user_id) => {
 export const findResetToken = async (token) => {
   const result = await sql.query(`
     SELECT * FROM password_resets 
-    WHERE token = @token AND expires_at > GETDATE()
+    WHERE token = @token AND expires_at > GETUTCDATE()
   `, { token });
   return result.recordset[0];
 };
