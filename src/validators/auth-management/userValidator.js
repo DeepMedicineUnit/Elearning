@@ -5,7 +5,10 @@ export const createUserSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
   role_id: z.number(),
-  position: z.enum(['thuong', 'truong', 'pho']),
-  department_id: z.number().optional(),
+  position: z.enum(['normal', 'provost', 'vice']),
+  department_id: z.number().nullable(),
   avatar_url: z.string().url().optional(),
+  phone_number: z.string().nullable(),
+  gender: z.enum(['male', 'female', 'other']).nullable(),
+  date_of_birth: z.string().nullable(), // Có thể format 'YYYY-MM-DD'
 });

@@ -17,7 +17,7 @@ export const withAuth = (handler, allowedRoles = []) => async (req, context) => 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     // ✅ Gắn user vào req để API dùng
-    req.user = decoded;
+    context.user = decoded;
     
     // ✅ Nếu API có truyền role, check quyền
     if (allowedRoles.length > 0 && !allowedRoles.includes(decoded.role)) {

@@ -26,6 +26,8 @@ export const login = async (email, password) => {
         id: user.id,
         email: user.email,
         role_id: user.role_id,
+        department_id: user.department_id,
+        position: user.position,
     }, SECRET, { expiresIn: '7d' });
 
     return { token };

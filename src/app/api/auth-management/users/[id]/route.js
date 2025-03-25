@@ -5,10 +5,21 @@ import { withAuth } from '@/middlewares/auth';
 import { createUserSchema } from '@/validators/auth-management/userValidator';
 
 // ✅ GET /users/:id - Lấy user chi tiết
-export const GET = withAuth(async (_, { params }) => {
+export const GET = withAuth(async (req, context) => {
   try {
-    const user = await userService.getUserDetail(params.id);
-    return NextResponse.json(user);
+    const { id } = await context.params; // ✅ Bắt buộc await
+    const targetUser = await userService.getUserDetail(id);
+    if (!targetUser) throw new ApiError(404, 'User không tồn tại');
+
+    // ✅ Phân quyền xem chi tiết
+    if (req.user.role_id !== 1) { // Không phải Admin
+      if (targetUser.role_id === 1) throw new ApiError(403, 'Không có quyền xem Admin');
+      if ([2, 4].includes(req.user.role_id) && targetUser.department_id !== req.user.department_id) {
+        throw new ApiError(403, 'Không có quyền xem user ngoài khoa');
+      }
+    }
+
+    return NextResponse.json(targetUser);
   } catch (err) {
     const { status, body } = handleApiError(err, 404);
     return NextResponse.json(body, { status });
@@ -16,14 +27,16 @@ export const GET = withAuth(async (_, { params }) => {
 });
 
 // ✅ PUT /users/:id - Cập nhật user
-export const PUT = withAuth(async (req, { params }) => {
+export const PUT = withAuth(async (req, context) => {
   try {
-    const body = await req.json();
+    const { id } = await context.params;  // ✅ BẮT BUỘC await đúng theo Next.js
+    const userId = Number(id);
+    if (!userId) throw new ApiError(400, 'Invalid user ID');
 
-    // Validate dữ liệu update (có thể custom schema update riêng)
+    const body = await req.json();
     const validated = createUserSchema.partial().parse(body);
 
-    const result = await userService.updateUserInfo(params.id, validated);
+    const result = await userService.updateUserInfo(userId, validated);
     return NextResponse.json(result);
   } catch (err) {
     const { status, body } = handleApiError(err);
@@ -31,13 +44,17 @@ export const PUT = withAuth(async (req, { params }) => {
   }
 });
 
-// ✅ DELETE /users/:id - Xóa user
-export const DELETE = withAuth(async (_, { params }) => {
+export const DELETE = withAuth(async (req, context) => {
   try {
-    const result = await userService.removeUser(params.id);
+    const { id } = await context.params;  // ✅ BẮT BUỘC await
+    const userId = Number(id);
+    if (!userId) throw new ApiError(400, 'Invalid user ID');
+
+    const result = await userService.removeUser(userId);
     return NextResponse.json(result);
   } catch (err) {
     const { status, body } = handleApiError(err);
     return NextResponse.json(body, { status });
   }
 });
+

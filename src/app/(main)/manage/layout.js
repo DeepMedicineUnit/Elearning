@@ -1,7 +1,7 @@
 'use client';
 
 import { Layout } from 'antd';
-import ManageSidebar from '@/components/ManageSidebar';
+import ManageSidebar from '@/components/manage/ManageSidebar';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import '@ant-design/v5-patch-for-react-19';
