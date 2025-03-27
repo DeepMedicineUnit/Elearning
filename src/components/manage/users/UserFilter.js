@@ -22,11 +22,10 @@ export default function UserFilter({
           value={filterRoles}
           onChange={setFilterRoles}
         >
-            
-          <Checkbox value="Admin">Admin</Checkbox>
+          {roleId !== 1 && <Checkbox value="Admin">Admin</Checkbox>}
+          {roleId !== 2 && roleId !== 4 && <Checkbox value="Student">Student</Checkbox>}
           <Checkbox value="Academic Officer">Academic Officer</Checkbox>
           <Checkbox value="Lecturer">Lecturer</Checkbox>
-          <Checkbox value="Student">Student</Checkbox>
         </Checkbox.Group>
       </div>
 

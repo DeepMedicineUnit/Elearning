@@ -139,8 +139,6 @@ export default function ManageUserPage() {
                 date_of_birth: dateOfBirth,
             };
 
-            console.log('✅ Payload gửi:', payload);
-
             const res = await fetch('/api/auth-management/users', {
                 method: 'POST',
                 headers: {
@@ -198,8 +196,6 @@ export default function ManageUserPage() {
                 gender: values.gender?.trim() || null,
                 date_of_birth: dateOfBirth,
             };
-
-            console.log('✅ Payload sửa:', payload);
 
             const res = await fetch(`/api/auth-management/users/${selectedUser.id}`, {
                 method: 'PUT',

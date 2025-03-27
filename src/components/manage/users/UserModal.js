@@ -3,16 +3,23 @@ import { Modal, Form, Input, Select, Button, Avatar, DatePicker, message } from 
 import { useEffect, useState } from 'react';
 import dayjs from 'dayjs';
 
-/** ✅ Modal Thêm User */
 export function AddUserModal({ isOpen, onClose, onFinish, form, currentUser, departments = [], classes = [] }) {
   const [avatarUrl, setAvatarUrl] = useState('https://i.pravatar.cc/150');
-  const role = Form.useWatch('role', form);
+  const [role, setRole] = useState(form.getFieldValue('role') || currentUser?.role);
+  const [position, setPosition] = useState('normal');  // Default position
+  
+  useEffect(() => {
+    if (role === 'Admin' && currentUser?.position === 'provost') {
+      setPosition('vice'); // If Admin and Provost, set position to Vice
+    }
+  }, [role, currentUser]);
 
-  const getRoleOptions = () => {
+  // Phân quyền hiển thị role dựa trên currentUser
+  const roleOptions = () => {
     if (!currentUser?.role) return [];
     if (currentUser.role === 'Admin' && currentUser.position === 'provost') {
       return [
-        { label: 'Vice (Admin)', value: 'Admin' },
+        { label: 'Admin', value: 'Admin' },
         { label: 'Lecturer', value: 'Lecturer' },
         { label: 'Academic Officer', value: 'Academic Officer' },
       ];
@@ -32,6 +39,14 @@ export function AddUserModal({ isOpen, onClose, onFinish, form, currentUser, dep
     return [];
   };
 
+  // Đảm bảo khi chọn vai trò là Admin, position sẽ là vice nếu Provost
+  const handleRoleChange = (value) => {
+    setRole(value);
+    if (value === 'Admin' && currentUser?.position === 'provost') {
+      setPosition('vice');
+    }
+  };
+
   return (
     <Modal
       title="Thêm người dùng"
@@ -48,7 +63,7 @@ export function AddUserModal({ isOpen, onClose, onFinish, form, currentUser, dep
 
       <Form form={form} layout="vertical" onFinish={(values) => onFinish({ ...values, avatar_url: avatarUrl })}>
         <div className="grid grid-cols-2 gap-4">
-          <Form.Item label="Họ" name="first_name" rules={[{ required: true, message: 'Nhập họ' }]}>
+          <Form.Item label="Họ" name="first_name" rules={[{ required: true, message: 'Nhập họ' }]} >
             <Input />
           </Form.Item>
 
@@ -76,12 +91,17 @@ export function AddUserModal({ isOpen, onClose, onFinish, form, currentUser, dep
             </Select>
           </Form.Item>
 
-          <Form.Item label="Vai trò" name="role" rules={[{ required: true, message: 'Chọn vai trò' }]}>
-            <Select options={getRoleOptions()} placeholder="Chọn vai trò" />
+          <Form.Item label="Vai trò" name="role" rules={[{ required: true, message: 'Chọn vai trò' }]} onChange={handleRoleChange}>
+            <Select 
+              options={roleOptions()} 
+              placeholder="Chọn vai trò"
+              value={role} 
+            />
           </Form.Item>
 
+          {/* Chỉ hiển thị Position nếu không phải Student */}
           {role !== 'Student' && (
-            <Form.Item label="Chức vụ" name="position">
+            <Form.Item label="Chức vụ" name="position" initialValue={position}>
               <Select placeholder="Chọn chức vụ" allowClear>
                 <Select.Option value="normal">Normal</Select.Option>
                 <Select.Option value="provost">Provost</Select.Option>
@@ -90,7 +110,8 @@ export function AddUserModal({ isOpen, onClose, onFinish, form, currentUser, dep
             </Form.Item>
           )}
 
-          {role && role !== 'Student' && (
+          {/* Không cho chọn phòng ban nếu chọn Admin */}
+          {role !== 'Admin' && role && (
             <Form.Item label="Khoa / Phòng ban" name="department_id">
               <Select placeholder="Chọn khoa / phòng ban" allowClear>
                 {departments.map((dep) => (
@@ -100,6 +121,7 @@ export function AddUserModal({ isOpen, onClose, onFinish, form, currentUser, dep
             </Form.Item>
           )}
 
+          {/* Nếu là Student thì bắt buộc chọn lớp */}
           {role === 'Student' && (
             <Form.Item label="Lớp" name="class_id" rules={[{ required: true, message: 'Chọn lớp' }]}>
               <Select placeholder="Chọn lớp">
@@ -115,11 +137,11 @@ export function AddUserModal({ isOpen, onClose, onFinish, form, currentUser, dep
   );
 }
 
-/** ✅ Modal Xem / Sửa User */
 export function ViewUserModal({ isOpen, onClose, user, onDelete, onEdit, departments = [], classes = [] }) {
   const [form] = Form.useForm();
   const [isEditing, setIsEditing] = useState(false);
   const [confirmVisible, setConfirmVisible] = useState(false);
+  const [deleteConfirmVisible, setDeleteConfirmVisible] = useState(false); // Thêm modal xác nhận xóa
   const role = Form.useWatch('role', form);
 
   useEffect(() => {
@@ -141,6 +163,20 @@ export function ViewUserModal({ isOpen, onClose, user, onDelete, onEdit, departm
     } catch (err) {
       message.error('Vui lòng điền đầy đủ thông tin');
     }
+  };
+
+  // Xử lý hiển thị modal xác nhận xóa
+  const handleDeleteConfirm = () => {
+    setDeleteConfirmVisible(true); // Mở modal xác nhận xóa
+  };
+
+  const handleDelete = async () => {
+    await onDelete(); // Gọi hàm xóa người dùng
+    setDeleteConfirmVisible(false); // Đóng modal sau khi xóa
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteConfirmVisible(false); // Đóng modal nếu huỷ bỏ
   };
 
   return (
@@ -224,7 +260,7 @@ export function ViewUserModal({ isOpen, onClose, user, onDelete, onEdit, departm
             </div>
 
             <div className="flex justify-between mt-6">
-              <Button danger onClick={onDelete}>Xoá người dùng</Button>
+              <Button danger onClick={handleDeleteConfirm}>Xoá người dùng</Button>
               {isEditing ? (
                 <div className="flex gap-2">
                   <Button onClick={() => setIsEditing(false)}>Huỷ</Button>
@@ -236,6 +272,17 @@ export function ViewUserModal({ isOpen, onClose, user, onDelete, onEdit, departm
             </div>
           </Form>
         )}
+      </Modal>
+
+      {/* Modal xác nhận xóa */}
+      <Modal
+        open={deleteConfirmVisible}
+        onCancel={handleCancelDelete}
+        onOk={handleDelete}
+        okText="Xác nhận xóa"
+        cancelText="Huỷ"
+      >
+        <p>Bạn chắc chắn muốn xóa người dùng này?</p>
       </Modal>
 
       {/* Modal xác nhận lưu */}
